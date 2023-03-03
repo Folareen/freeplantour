@@ -1,9 +1,10 @@
 import '../styles/globals.css';
+import '../styles/styles.css';
 import { UserProvider } from '@auth0/nextjs-auth0/client';
 import { DM_Sans, DM_Serif_Display } from '@next/font/google';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { config } from '@fortawesome/fontawesome-svg-core';
-import { PostsProvider } from '../context/postsContext';
+import { ItinerariesProvider } from '../context/itinerariesContext';
 config.autoAddCss = false;
 
 const dmSans = DM_Sans({
@@ -22,13 +23,13 @@ function MyApp({ Component, pageProps }) {
   const getLayout = Component.getLayout || ((page) => page);
   return (
     <UserProvider>
-      <PostsProvider>
+      <ItinerariesProvider>
         <main
           className={`${dmSans.variable} ${dmSerifDisplay.variable} font-body`}
         >
           {getLayout(<Component {...pageProps} />, pageProps)}
         </main>
-      </PostsProvider>
+      </ItinerariesProvider>
     </UserProvider>
   );
 }

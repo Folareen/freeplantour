@@ -10,10 +10,9 @@ export default function Home() {
       <div className="relative z-10 text-white px-10 py-5 text-center max-w-screen-sm bg-slate-900/90 rounded-md backdrop-blur-sm">
         <Logo />
         <p>
-          The AI-powered SAAS solution to generate SEO-optimized blog posts in
-          minutes. Get high-quality content, without sacrificing your time.
+          The AI-powered SAAS solution to generate itineraries.
         </p>
-        <Link href="/post/new" className="btn text-left">
+        <Link href="/itinerary/new" className="btn text-left">
           Begin
         </Link>
       </div>

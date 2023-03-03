@@ -4,6 +4,7 @@ import { getAppProps } from '../utils/getAppProps';
 
 export default function TokenTopup() {
   const handleClick = async () => {
+    console.log('add new token!')
     const result = await fetch(`/api/addTokens`, {
       method: 'POST',
     });

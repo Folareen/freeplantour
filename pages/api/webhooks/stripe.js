@@ -17,6 +17,9 @@ const stripe = stripeInit(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 const handler = async (req, res) => {
+
+  console.log('got to stripe webhook handler')
+
   if (req.method === 'POST') {
     let event;
     try {
@@ -32,7 +35,7 @@ const handler = async (req, res) => {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const client = await clientPromise;
-        const db = client.db('BlogStandard');
+        const db = client.db('Freeplantour');
 
         const paymentIntent = event.data.object;
         const auth0Id = paymentIntent.metadata.sub;
@@ -61,6 +64,8 @@ const handler = async (req, res) => {
     }
     res.status(200).json({ received: true });
   }
+
+  console.log('done with stripe webhook handler')
 };
 
 export default cors(handler);

@@ -7,24 +7,24 @@ export default withApiAuthRequired(async function handler(req, res) {
       user: { sub },
     } = await getSession(req, res);
     const client = await clientPromise;
-    const db = client.db('BlogStandard');
+    const db = client.db('Freeplantour');
     const userProfile = await db.collection('users').findOne({
       auth0Id: sub,
     });
 
-    const { lastPostDate, getNewerPosts } = req.body;
+    const { lastItineraryDate, getNewerItineraries } = req.body;
 
-    const posts = await db
-      .collection('posts')
+    const itineraries = await db
+      .collection('itineraries')
       .find({
         userId: userProfile._id,
-        created: { [getNewerPosts ? '$gt' : '$lt']: new Date(lastPostDate) },
+        created: { [getNewerItineraries ? '$gt' : '$lt']: new Date(lastItineraryDate) },
       })
-      .limit(getNewerPosts ? 0 : 5)
+      .limit(getNewerItineraries ? 0 : 5)
       .sort({ created: -1 })
       .toArray();
 
-    res.status(200).json({ posts });
+    res.status(200).json({ itineraries });
     return;
   } catch (e) {}
 });
