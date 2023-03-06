@@ -35,7 +35,7 @@ const options = {
 };
 
 const componentDecorator = (href, text, key) => (
-  <a className="linkify__text" href={href} key={key} target="_blank">
+  <a className="linkify__text" href={href} key={key} target="_blank" rel='noreferrer'>
     {text}
   </a>
 );
