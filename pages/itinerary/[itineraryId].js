@@ -1,16 +1,17 @@
 import { getSession, withPageAuthRequired } from '@auth0/nextjs-auth0';
 import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { ObjectId } from 'mongodb';
 import { useRouter } from 'next/router';
 import { useContext, useRef, useState } from 'react';
 import { AppLayout } from '../../components/AppLayout';
-import ItinerariesContext from '../../context/ItinerariesContext';
-import clientPromise from '../../lib/mongodb';
+import ItinerariesContext from '../../context/itinerariesContext';
 import { getAppProps } from '../../utils/getAppProps';
 import Linkify from "react-linkify";
 import jsPDF from 'jspdf';
 import validator from 'validator'
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase.config';
+import { useIntl } from 'react-intl';
 
 const componentDecorator = (href, text, key) => (
   <a className="linkify__text" href={href} key={key} target="_blank" rel='noreferrer'>
@@ -18,16 +19,20 @@ const componentDecorator = (href, text, key) => (
   </a>
 );
 
-const subject = "Tu itinerario ya esta generado";
 
 export default function Itinerary(props) {
-  console.log('PROPS: ', props.apiOutput);
+
+  const intl = useIntl();
+
+  const getText = (id) => intl.formatMessage({ id });
+
+  const subject = getText("itineraryid.title");
+
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { deleteItinerary } = useContext(ItinerariesContext);
 
   const handleDeleteConfirm = async () => {
-    console.log('DELETE ITINERARY: ', props.id)
     try {
       const response = await fetch(`/api/deleteItinerary`, {
         method: 'POST',
@@ -52,18 +57,11 @@ export default function Itinerary(props) {
     var email = e.target.value;
 
     if (validator.isEmail(email)) {
-      setEmailError("Email Correcto!:)");
+      setEmailError(getText('itineraryid.emailok'));
       setEmailOk(e.target.value);
     } else {
-      setEmailError("Email no válido!");
+      setEmailError("itineraryid.emailerror");
     }
-  };
-
-  const scrollToDiv = () => {
-    window.scrollTo({
-      top: divRef.current.offsetTop,
-      behavior: "smooth",
-    });
   };
 
   const emailContent = props.title + props.itineraryContent;
@@ -73,10 +71,8 @@ export default function Itinerary(props) {
     let doc = new jsPDF("landscape", 'pt', 'A4');
     const content = document.getElementById("pdf-view");
 
-    // Ajustar el tamaño de fuente del contenido HTML para que quepa en una sola página
     content.style.fontSize = "12px";
 
-    // Opcional: ajustar la escala de la página si el contenido no cabe en una sola página
     const options = {
       callback: () => {
         doc.save("freeplantour.pdf");
@@ -108,7 +104,7 @@ export default function Itinerary(props) {
                 </div>
               )}
               <span style={{ fontWeight: "bold", color: "black" }}>
-                Te mandamos tu itinierario por correo:
+                {getText('itineraryid.sendemail')}
               </span>
               <input
                 type="text"
@@ -131,12 +127,12 @@ export default function Itinerary(props) {
                         subject
                       )}&body=${encodeURIComponent(props.apiOutput)}`}
                   >
-                    Enviar Plan
+                    {getText('itineraryid.sendplan')}
                   </a>
                 </span>
               </div>
               <div class="front">
-                <button onClick={pdfDownload}>&nbsp;&nbsp;&nbsp;&nbsp;Generar PDF</button>
+                <button onClick={pdfDownload}>&nbsp;&nbsp;&nbsp;&nbsp;{getText('itineraryid.genpdf')}</button>
               </div>
 
 
@@ -151,27 +147,26 @@ export default function Itinerary(props) {
             className="btn bg-red-600 hover:bg-red-700"
             onClick={() => setShowDeleteConfirm(true)}
           >
-            Delete itinerary
+            {getText('itinerayid.delete')}
           </button>
         )}
         {!!showDeleteConfirm && (
           <div>
             <p className="p-2 bg-red-300 text-center">
-              Are you sure you want to delete this itinerary? This action is
-              irreversible
+              {getText('itineraryid.deleteconfirm')}
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="btn bg-stone-600 hover:bg-stone-700"
               >
-                cancel
+                {getText('itineraryid.canceldel')}
               </button>
               <button
                 onClick={handleDeleteConfirm}
                 className="btn bg-red-600 hover:bg-red-700"
               >
-                confirm delete
+                {getText('itineraryid.confirmdel')}
               </button>
             </div>
           </div>
@@ -189,17 +184,17 @@ export const getServerSideProps = withPageAuthRequired({
   async getServerSideProps(ctx) {
     const props = await getAppProps(ctx);
     const userSession = await getSession(ctx.req, ctx.res);
-    const client = await clientPromise;
-    const db = client.db('Freeplantour');
-    const user = await db.collection('users').findOne({
-      auth0Id: userSession.user.sub,
-    });
-    const itinerary = await db.collection('itineraries').findOne({
-      _id: new ObjectId(ctx.params.itineraryId),
-      userId: user._id,
-    });
 
-    if (!itinerary) {
+    // get user data from firestore
+    const docRef = doc(db, "users", `${userSession.user.sub}-${userSession.user.email}`);
+    const userDocSnap = await getDoc(docRef);
+
+    // get itinerary data from firestore
+    const itinerariesDocRef = doc(db, "itineraries", ctx.params.itineraryId);
+    const itineraryDocSnap = await getDoc(itinerariesDocRef);
+
+// if itinerary doesn't exist, redirect to new itinerary page
+    if (!itineraryDocSnap.exists()) {
       return {
         redirect: {
           destination: '/itinerary/new',
@@ -208,13 +203,14 @@ export const getServerSideProps = withPageAuthRequired({
       };
     }
 
+    // return itinerary data to page
     return {
       props: {
         id: ctx.params.itineraryId,
-        apiOutput: itinerary.apiOutput,
-        info: itinerary.info,
-        title: itinerary.title,
-        itineraryCreated: itinerary.created.toString(),
+        apiOutput: itineraryDocSnap.data().apiOutput,
+        info: itineraryDocSnap.data().info,
+        title: itineraryDocSnap.data().title,
+        itineraryCreated: itineraryDocSnap.data().created.toString(),
         ...props,
       },
     };

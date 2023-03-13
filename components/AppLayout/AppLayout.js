@@ -3,10 +3,11 @@ import { faCoins } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
+import { useIntl } from 'react-intl';
 import ItinerariesContext from '../../context/itinerariesContext';
-import { Logo } from '../Logo';
-import Nav from '../Nav';
+
+
 
 export const AppLayout = ({
   children,
@@ -15,7 +16,12 @@ export const AppLayout = ({
   itineraryId,
   itineraryCreated,
 }) => {
-  const [currentLanguage, setCurrentLanguage] = useState('es');
+
+  const currentLanguage = useIntl().locale;
+
+  const intl = useIntl();
+
+  const getText = (id) => intl.formatMessage({ id });
 
   const { user } = useUser();
 
@@ -23,37 +29,35 @@ export const AppLayout = ({
     useContext(ItinerariesContext);
 
   useEffect(() => {
+    console.log(itineraries)
     setItinerariesFromSSR(itinerariesFromSSR);
     if (itineraryId) {
       const exists = itinerariesFromSSR?.find((itinerary) => itinerary._id === itineraryId);
       if (!exists) {
-        getItineraries({ getNewerItineraries: true, lastItineraryDate: itineraryCreated });
+        getItineraries({ getNewerItineraries: true, lastItineraryDate: itineraryCreated});
       }
     }
   }, [itinerariesFromSSR, setItinerariesFromSSR, itineraryId, itineraryCreated, getItineraries]);
 
-  console.log(itineraries, 'in app layout')
 
   return (
     <div>
-<Nav currentLanguage={currentLanguage} setCurrentLanguage={setCurrentLanguage} />
       <div className="grid grid-cols-[300px_1fr] h-screen max-h-screen">
         <div className="flex flex-col text-white overflow-hidden">
           <div className="bg-slate-800 px-2">
-            <Logo />
-            <Link href="/itinerary/new" className="btn">
-              New itinerary
+            <Link href={`/${currentLanguage}/itinerary/new`} className="btn mt-3 mb-4">
+              {getText( "applayout.newbtn" )}
             </Link>
-            <Link href="/token-topup" className="block mt-2 text-center">
+            <Link href={`/${currentLanguage}/token-topup`} className="block mt-2 text-center">
               <FontAwesomeIcon icon={faCoins} className="text-yellow-500" />
-              <span className="pl-1">{availableTokens} tokens available</span>
+              <span className="pl-1">{availableTokens? availableTokens : 0} {getText( "applayout.tokens" )}</span>
             </Link>
           </div>
           <div className="px-4 flex-1 overflow-auto bg-gradient-to-b from-slate-800 to-cyan-800">
             {itineraries.map((itinerary) => (
               <Link
                 key={itinerary._id}
-                href={`/itinerary/${itinerary._id}`}
+                href={`/${currentLanguage}/itinerary/${itinerary._id}`}
                 className={`py-1 border border-white/0 block text-ellipsis overflow-hidden whitespace-nowrap my-1 px-2 bg-white/10 cursor-pointer rounded-sm ${itineraryId === itinerary._id ? 'bg-white/20 border-white' : ''
                   }`}
               >
@@ -67,7 +71,7 @@ export const AppLayout = ({
                 }}
                 className="hover:underline text-sm text-slate-400 text-center cursor-pointer mt-4"
               >
-                Load more itineraries
+                {getText( "applayout.morebtn" )}
               </div>
             )}
           </div>
@@ -86,12 +90,12 @@ export const AppLayout = ({
                 <div className="flex-1">
                   <div className="font-bold">{user.email}</div>
                   <Link className="text-sm" href="/api/auth/logout">
-                    Logout
+                    {getText( "applayout.logout" )}
                   </Link>
                 </div>
               </>
             ) : (
-              <Link href="/api/auth/login">Login</Link>
+              <Link href="/api/auth/login">{getText( "applayout.login" )}</Link>
             )}
           </div>
         </div>

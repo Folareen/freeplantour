@@ -1,7 +1,8 @@
 import Cors from 'micro-cors';
 import stripeInit from 'stripe';
 import verifyStripe from '@webdeveducation/next-verify-stripe';
-import clientPromise from '../../../lib/mongodb';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../../../firebase.config';
 
 const cors = Cors({
   allowMethods: ['POST', 'HEAD'],
@@ -34,30 +35,21 @@ const handler = async (req, res) => {
 
     switch (event.type) {
       case 'payment_intent.succeeded': {
-        const client = await clientPromise;
-        const db = client.db('Freeplantour');
 
         const paymentIntent = event.data.object;
-        const auth0Id = paymentIntent.metadata.sub;
+        const userId = `${paymentIntent.metadata.sub}-${paymentIntent.metadata.email}`
 
-        console.log('AUTH 0 ID: ', paymentIntent);
+        // get user data from firestore
+        const docRef = doc(db, "users", userId);
+        const userDocSnap = await getDoc(docRef);
 
-        const userProfile = await db.collection('users').updateOne(
-          {
-            auth0Id,
-          },
-          {
-            $inc: {
-              availableTokens: 10,
-            },
-            $setOnInsert: {
-              auth0Id,
-            },
-          },
-          {
-            upsert: true,
-          }
-        );
+        // add 10 tokens to user's available tokens
+        const userDocRef = doc(db, "users", userId);
+        await setDoc(userDocRef, {
+          availableTokens: userDocSnap?.data()?.availableTokens ?
+            Number(userDocSnap.data()?.availableTokens) + 10 : 10
+        })
+
       }
       default:
         console.log('UNHANDLED EVENT: ', event.type);

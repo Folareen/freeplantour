@@ -1,11 +1,16 @@
 import { withPageAuthRequired } from '@auth0/nextjs-auth0';
+import { useIntl } from 'react-intl';
 import { AppLayout } from '../components/AppLayout';
 import { getAppProps } from '../utils/getAppProps';
 
 export default function Success() {
+  const intl = useIntl();
+
+  const getText = (id) => intl.formatMessage({ id });
+
   return (
     <div>
-      <h1>Thank you for your purchase!</h1>
+      <h1>{getText('success.message')}</h1>
     </div>
   );
 }

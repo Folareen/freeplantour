@@ -1,7 +1,9 @@
 import { IconCircleNumber2 } from '@tabler/icons'
 import React from 'react'
+import { useIntl } from 'react-intl'
 
 const Duration = ({ setDuration, duration }) => {
+    const intl = useIntl()
     return (
         <div
             className="flex-none mr-6 flex-col items-start"
@@ -10,7 +12,7 @@ const Duration = ({ setDuration, duration }) => {
             <div className="flex items-center mb-2">
                 <IconCircleNumber2 color="rgb(110 231 183)" />
                 <span className="ml-2">
-                    ¿Cuántos días?<font color="#CA0935">*</font>
+                    {intl.formatMessage({id: 'new.duration'})}<font color="#CA0935">*</font>
                 </span>
             </div>
             <input

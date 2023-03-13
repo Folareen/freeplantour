@@ -9,6 +9,7 @@ function itinerariesReducer(state, action) {
   switch (action.type) {
     case 'addItineraries': {
       const newItineraries = [...state];
+      console.log('newItineraries', action.itineraries)
       action.itineraries.forEach((itinerary) => {
         const exists = newItineraries.find((p) => p._id === itinerary._id);
         if (!exists) {
@@ -51,22 +52,30 @@ export const ItinerariesProvider = ({ children }) => {
 
   const getItineraries = useCallback(
     async ({ lastItineraryDate, getNewerItineraries = false }) => {
-      const result = await fetch(`/api/getItineraries`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ lastItineraryDate, getNewerItineraries }),
-      });
-      const json = await result.json();
-      const itinerariesResult = json.itineraries || [];
-      if (itinerariesResult.length < 5) {
-        setNoMoreItineraries(true);
+      console.log(lastItineraryDate, 'last itinerary date')
+      try {
+        console.log('getting itineraries');
+        const result = await fetch(`/api/getItineraries`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ lastItineraryDate, getNewerItineraries }),
+        });
+        console.log('hereeee')
+        const json = await result.json();
+        const itinerariesResult = json.itineraries || [];
+        if (itinerariesResult.length < 5) {
+          setNoMoreItineraries(true);
+        }
+        dispatch({
+          type: 'addItineraries',
+          itineraries: itinerariesResult,
+        });
+      } catch (error) {
+        console.log(error)
       }
-      dispatch({
-        type: 'addItineraries',
-        itineraries: itinerariesResult,
-      });
+
     },
     []
   );

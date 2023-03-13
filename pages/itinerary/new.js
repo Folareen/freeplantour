@@ -19,74 +19,39 @@ import Logo2 from "../../assets/logo2.png";
 import Duration from '../../components/Inputs/Duration';
 import Month from '../../components/Inputs/Month';
 import UserInput from '../../components/Inputs/UserInput';
-
-// import {
-//   IconCircleNumber1,
-//   IconCircleNumber2,
-//   IconCircleNumber3,
-//   IconCircleNumber4,
-// } from "@tabler/icons";
-
-
-const options = {
-  orientation: 'landscape',
-  unit: 'in',
-  format: [4, 2]
-};
-
-const componentDecorator = (href, text, key) => (
-  <a className="linkify__text" href={href} key={key} target="_blank" rel='noreferrer'>
-    {text}
-  </a>
-);
+import { useIntl } from 'react-intl';
 
 const months = [
-  "Mes",
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
-const subject = "Tu itinerario ya esta generado";
+
 
 const NewItinerary = () => {
+
+  const intl = useIntl();
+
+  const getText = (id) => intl.formatMessage({ id });
+
   const router = useRouter();
   const [duration, setDuration] = useState(3);
   const [userInput, setUserInput] = useState("");
   const [apiOutput, setApiOutput] = useState("");
   const [info, setInfo] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState("Cualquier mes");
+  const [selectedMonth, setSelectedMonth] = useState(getText("month.any"));
 
   const divRef = useRef(null);
-
-  const [emailError, setEmailError] = useState("");
-  const [emailOk, setEmailOk] = useState("");
-  const validateEmail = (e) => {
-    var email = e.target.value;
-
-    if (validator.isEmail(email)) {
-      setEmailError("Email Correcto!:)");
-      setEmailOk(e.target.value);
-    } else {
-      setEmailError("Email no válido!");
-    }
-  };
-
-  const scrollToDiv = () => {
-    window.scrollTo({
-      top: divRef.current.offsetTop,
-      behavior: "smooth",
-    });
-  };
 
   const callGenerateEndpoint = async (e) => {
 
@@ -95,14 +60,7 @@ const NewItinerary = () => {
 
     setIsGenerating(true);
 
-    //     let prompt = `Por favor, genere un itinerario detallado para un viaje de ${duration} días a ${userInput} en el próximo ${selectedMonth}, 
-    // 	 incluyendo la programación horaria de todas las actividades, atracciones y comidas.
-    // Asegúrese de que el itinerario incluya una mezcla de atracciones turísticas populares, experiencias locales y tiempo para relajarse. 
-    // Además, incluya sugerencias para el almuerzo y la cena en una variedad de restaurantes diferentes para experimentar la diversa escena culinaria de la ciudad. 
-    // Incluya la descripición, el rango de precios y un enlace a su Web oficial para cada restaurante y atracción sugerida.
-    // Mantenga un área de viaje máxima del tamaño de Hokkaido, si es posible, para minimizar el tiempo de viaje entre ciudades.
-    // Finalmente describe el clima en ese mes, y también 3 cosas para tomar nota sobre la cultura de ese país.`;
-    let prompt = `Por favor, genere un itinerario detallado para un viaje de ${duration} días a ${userInput} en el próximo ${selectedMonth}`;
+    let prompt = `${getText('new.generateitineraryof')} ${duration} ${getText('new.generateitineraryto')} ${userInput} ${getText('new.generateitinerarynext')} ${selectedMonth}`;
 
     try {
       const response = await fetch(`/api/generateItinerary`, {
@@ -110,10 +68,9 @@ const NewItinerary = () => {
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ prompt, userInput }),
+        body: JSON.stringify({ prompt, userInput, selectedMonth }),
       });
       const json = await response.json();
-      console.log('RESULT: ', json);
       if (json?.itineraryId) {
         router.push(`/itinerary/${json.itineraryId}`);
       }
@@ -121,32 +78,6 @@ const NewItinerary = () => {
       setIsGenerating(false);
     }
   };
-
-  const emailContent = apiOutput + info;
-
-  const pdfDownload = (e) => {
-    e.preventDefault()
-    let doc = new jsPDF("landscape", 'pt', 'A4');
-    const content = document.getElementById("pdf-view");
-
-    // Ajustar el tamaño de fuente del contenido HTML para que quepa en una sola página
-    content.style.fontSize = "12px";
-
-    // Opcional: ajustar la escala de la página si el contenido no cabe en una sola página
-    const options = {
-      callback: () => {
-        doc.save("freeplantour.pdf");
-      },
-      x: 5,
-      y: 5,
-      html2canvas: { scale: 0.8 }
-    };
-
-    // Generar el PDF
-    doc.html(content, options);
-    console.log(content)
-  };
-
 
   return (
     <div className="root">
@@ -166,9 +97,7 @@ const NewItinerary = () => {
             <div class="column">
               <h2>
                 <br />
-                Cuéntanos tu viaje y tendrás un itinerario personalizado al
-                instante. Como no hay 2 viajes iguales, cada guía generada es
-                única.
+                {getText("new.title")}
               </h2>
             </div>
           </div>
@@ -178,7 +107,7 @@ const NewItinerary = () => {
             <UserInput userInput={userInput} setUserInput={setUserInput} />
 
             <div className="flex w-100 mt-4">
-              
+
               <Duration duration={duration} setDuration={setDuration} />
 
               <Month months={months} setSelectedMonth={setSelectedMonth} selectedMont={selectedMonth} />
@@ -197,16 +126,16 @@ const NewItinerary = () => {
                     <div>
                       <span className="loader mr-2"></span>
                       <span>
-                        ...PREPARANDO...
+                        {getText('new.preparing')}
                         <br />
-                        Cuando ya no veas esto
+                        {getText("new.dontsee")}
                         <br />
-                        tu guía aparecerá en la siguiente página
+                        {getText("new.appearnext")}
                         <br />
                       </span>
                     </div>
                   ) : (
-                    <span className="font-semibold">Generar</span>
+                    <span className="font-semibold">{getText('new.generate')}</span>
                   )}
                 </div>
               </button>
@@ -229,10 +158,7 @@ export const getServerSideProps = withPageAuthRequired({
   async getServerSideProps(ctx) {
     const props = await getAppProps(ctx);
 
-    console.log('CTX: ', ctx)
-
-    // console.log('PROPS: ', props.availableTokens)
-
+// if there are no tokens, redirect to the topup page
     if (!props.availableTokens) {
       return {
         redirect: {

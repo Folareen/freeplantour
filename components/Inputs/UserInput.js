@@ -1,13 +1,18 @@
 import { IconCircleNumber1 } from '@tabler/icons'
 import React from 'react'
+import { useIntl } from 'react-intl';
 
 const UserInput = ({setUserInput, userInput}) => {
+    const intl = useIntl();
+
+    const getText = (id) => intl.formatMessage({ id });
+
     return (
         <div>
             <div className="flex items-center">
                 <IconCircleNumber1 color="rgb(110 231 183)" />
                 <span className="ml-2">
-                    ¿Dónde quieres ir?<font color="#CA0935">*</font>
+                    {getText('new.location')}<font color="#CA0935">*</font>
                 </span>
             </div>
             {

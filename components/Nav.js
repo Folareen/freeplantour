@@ -1,34 +1,61 @@
+import { useRouter } from 'next/router'
+
 import React from 'react'
 
-const Nav = ({ currentLanguage, setCurrentLanguage }) => {
+import { useIntl } from 'react-intl'
+
+
+
+const Nav = () => {
+
+    const currentLanguage = useIntl().locale
+
+
+
+    const changeLanguage = (e, language) => {
+        e.preventDefault()
+        const urlObj = window.location
+        if (['es', 'en', 'de', 'fr', 'pt'].includes(urlObj.pathname.substring(1, 3))){
+        window.location.href = urlObj.origin + `/${language}` + urlObj.pathname.substring(3, urlObj.pathname.length)
+        } else {
+        window.location.href = urlObj.origin + `/${language}` + urlObj.pathname
+        }
+    }
+
+
+
     return (
+
         <nav class="front">
-            <a href="#" style={{ textDecoration: currentLanguage === "es" ? "none" : "underline" }} onClick={() => setCurrentLanguage("es")}>ES</a>
+
+            <button style={{ textDecoration: currentLanguage === "es" ? "none" : "underline" }} onClick={(e) => changeLanguage(e, 'es')}>ES</button>
+
             {" | "}
-            <a href="#" style={{ textDecoration: currentLanguage === "en" ? "none" : "underline" }} onClick={() => setCurrentLanguage("en")}>EN</a>
+
+            <button style={{ textDecoration: currentLanguage === "en" ? "none" : "underline" }} onClick={(e) => changeLanguage(e, 'en')}>EN</button>
+
             {" | "}
-            <a href="#" style={{ textDecoration: currentLanguage === "de" ? "none" : "underline" }} onClick={() => setCurrentLanguage("de")}>DE</a>
+
+            <button  style={{ textDecoration: currentLanguage === "de" ? "none" : "underline" }} onClick={(e) => changeLanguage(e, 'de')}>DE</button>
+
             {" | "}
-            <a href="#" style={{ textDecoration: currentLanguage === "fr" ? "none" : "underline" }} onClick={() => setCurrentLanguage("fr")}>FR</a>
+
+            <button style={{ textDecoration: currentLanguage === "fr" ? "none" : "underline" }} onClick={(e) => changeLanguage(e, 'fr')} >FR</button>
+
             {" | "}
-            <a href="#" style={{ textDecoration: currentLanguage === "pt" ? "none" : "underline" }} onClick={() => setCurrentLanguage("pt")}>PT</a>
+
+            <button  style={{ textDecoration: currentLanguage === "pt" ? "none" : "underline" }} onClick={(e) => changeLanguage(e, 'pt')}>PT</button>
+
             &nbsp;&nbsp;
-            <a href="#" target="_blank">SUBSCRIBE</a>
-            &nbsp;&nbsp;
-
-            <div class="topnav">
-                <div id="myLinks">
-                    <a href="#news">News</a>
-                    <a href="#contact">Contact</a>
-                    <a href="#about">About</a>
-                </div>
-                <a href="javascript:void(0);" class="icon" onclick="myFunction()">
-                    <i class="fa fa-bars"></i>
-                </a>
-            </div>
 
 
-        </nav>)
+
+        </nav>
+
+    )
+
 }
+
+
 
 export default Nav

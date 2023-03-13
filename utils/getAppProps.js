@@ -1,41 +1,39 @@
 import { getSession } from '@auth0/nextjs-auth0';
-import clientPromise from '../lib/mongodb';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../firebase.config';
 
-export const getAppProps = async (ctx) => {
-  const userSession = await getSession(ctx.req, ctx.res);
-  console.log('USER SESSION: ', userSession);
-  console.log('RES: ', ctx.res);
-  const client = await clientPromise;
-  const db = client.db('Freeplantour');
-  const user = await db.collection('users').findOne({
-    auth0Id: userSession.user.sub,
-  });
+export let getAppProps = async (ctx) => {
 
-  if (!user) {
+  let userSession = await getSession(ctx.req, ctx.res);
+  
+  // get user data from firestore
+  let docRef = doc(db, "users", `${userSession.user.sub}-${userSession.user.email}`);
+  let userDocSnap = await getDoc(docRef);
+
+  // if user doesn't exist in firestore, that means they have'nt purchased any tokens or itineraries. so give 0 and []
+  if (!userDocSnap.exists()) {
+    console.log("doesn't exist!")
     return {
       availableTokens: 0,
-      Itineraries: [],
-    };
+      itineraries: [],
+    }
   }
 
-  const Itineraries = await db
-    .collection('itineraries')
-    .find({
-      userId: user._id,
-    })
-    .limit(5)
-    .sort({
-      created: -1,
-    })
-    .toArray();
+  // get user's itineraries from firestore
+  let rawItineraries = await getDocs(query(collection(db, "itineraries"), where("userId", "==", `${userSession.user.sub}-${userSession.user.email}`)));
 
+  // sort itineraries by created date
+  let sortedItineraries = rawItineraries.docs.sort((a, b) => {
+    return b.data().created - a.data().created;
+  })
+
+  
+  // return the first 5 itineraries and the user's available tokens
   return {
-    availableTokens: user.availableTokens,
-    Itineraries: Itineraries.map(({ created, _id, userId, ...rest }) => ({
-      _id: _id.toString(),
-      created: created.toString(),
-      ...rest,
-    })),
+    availableTokens: userDocSnap.data().availableTokens,
+    itineraries: sortedItineraries.slice(0, 5).map((doc) => {
+      return { ...doc.data(), created: new Date(doc.data().created).toString() }
+    }),
     itineraryId: ctx.params?.itineraryId || null,
-  };
+  }
 };
