@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     },
   ];
 
-  const host = process.env.NODE_ENV === 'development' ? 'localhost:3000' : 'freeplantour.com';
+  const host = process.env.NODE_ENV === 'development' ? 'localhost:3000' : 'itinerary-generator.vercel.app'
    const protocol = process.env.NODE_ENV === 'development' ? 'http://' : 'https://';
 
   // const protocol =

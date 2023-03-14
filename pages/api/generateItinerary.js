@@ -6,6 +6,8 @@ import { db } from '../../firebase.config';
 
 export default withApiAuthRequired(async function handler(req, res) {
 
+  console.log('got heeeeeeeereeerererere')
+
   const { user } = await getSession(req, res);
 
   // get user data from firestore

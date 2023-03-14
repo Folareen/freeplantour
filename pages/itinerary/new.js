@@ -40,6 +40,7 @@ const months = [
 const NewItinerary = () => {
 
   const intl = useIntl();
+  const currentLanguage = useIntl().locale;
 
   const getText = (id) => intl.formatMessage({ id });
 
@@ -58,21 +59,24 @@ const NewItinerary = () => {
     e.preventDefault();
     setIsGenerating(true);
 
-    setIsGenerating(true);
-
     let prompt = `${getText('new.generateitineraryof')} ${duration} ${getText('new.generateitineraryto')} ${userInput} ${getText('new.generateitinerarynext')} ${selectedMonth}`;
 
     try {
-      const response = await fetch(`/api/generateItinerary`, {
-        method: 'POST',
-        headers: {
+      console.log(axios, 'axiosss')
+      const response = await axios.post(`${window.location.origin}/api/generateItinerary`, { prompt, userInput, selectedMonth }, {timeout: 15000,         headers: {
           'content-type': 'application/json',
-        },
-        body: JSON.stringify({ prompt, userInput, selectedMonth }),
-      });
-      const json = await response.json();
+        } })
+      // const response = await fetch(`/api/generateItinerary`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'content-type': 'application/json',
+      //   },
+      //   body: JSON.stringify({ prompt, userInput, selectedMonth }),
+      // });
+      // const json = await response.json();
+      const json = await response.data
       if (json?.itineraryId) {
-        router.push(`/itinerary/${json.itineraryId}`);
+        router.push(`/${currentLanguage}/itinerary/${json.itineraryId}`);
       }
     } catch (e) {
       setIsGenerating(false);
