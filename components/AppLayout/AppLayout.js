@@ -25,6 +25,8 @@ export const AppLayout = ({
 
   const { user } = useUser();
 
+  console.log(user)
+
   const { setItinerariesFromSSR, itineraries, getItineraries, noMoreItineraries } =
     useContext(ItinerariesContext);
 

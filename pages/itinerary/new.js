@@ -4,6 +4,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRouter } from 'next/router';
 import { AppLayout } from '../../components/AppLayout';
 import { getAppProps } from '../../utils/getAppProps';
+import { useUser } from '@auth0/nextjs-auth0/client';
+import { collection, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebase.config'
 
 import { useState, useRef } from "react";
 
@@ -52,6 +55,8 @@ const NewItinerary = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(getText("month.any"));
 
+  const {user} = useUser()
+
   const divRef = useRef(null);
 
   const callGenerateEndpoint = async (e) => {
@@ -62,23 +67,60 @@ const NewItinerary = () => {
     let prompt = `${getText('new.generateitineraryof')} ${duration} ${getText('new.generateitineraryto')} ${userInput} ${getText('new.generateitinerarynext')} ${selectedMonth}`;
 
     try {
-      console.log(axios, 'axiosss')
-      const response = await axios.post(`${window.location.origin}/api/generateItinerary`, { prompt, userInput, selectedMonth }, {timeout: 15000,         headers: {
+      const response = await axios.post(`/api/generateItinerary`, { prompt }, {headers: {
           'content-type': 'application/json',
         } })
-      // const response = await fetch(`/api/generateItinerary`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'content-type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ prompt, userInput, selectedMonth }),
-      // });
-      // const json = await response.json();
-      const json = await response.data
-      if (json?.itineraryId) {
-        router.push(`/${currentLanguage}/itinerary/${json.itineraryId}`);
+        console.log('came back')
+      
+
+       console.log(response.data, 'response: ');
+  // const { output } = response;
+  // console.log(output?.text, "OpenAI replied...");
+
+  const result = await fetch(
+    `https://es.wikivoyage.org/w/api.php?origin=*&format=json&formatversion=2&action=parse&page=${userInput}&prop=text`
+  );
+  const respon = await result.json();
+
+  // console.log('THE RESPONSE!!!', respon)
+  const content = respon?.parse?.text ?? ""
+
+  const cleanedContent = content.replace(/Esta guía es [\s\S]*?ayuda a mejorarlo/g, "");
+  const cleanedContent2 = cleanedContent.replace(/Este artículo [\s\S]*?otros artículos/g, "");
+  const cleanedContent3 = cleanedContent2.replace(/Este artículo [\s\S]*?GNU Free Documentation License/g, "");
+
+  const finalContent = cleanedContent3.replace(/\beditar\b/g, "");
+
+    // get user data from firestore
+  const docRef = doc(db, "users", `${user.sub}-${user.email}`);
+  const userDocSnap = await getDoc(docRef);
+
+  // get user data from firestore
+  const userDocRef = doc(db, "users", `${user.sub}-${user.email}`);
+
+  // deduct 1 token from user's available tokens
+  await updateDoc(userDocRef, {
+    availableTokens: Number(userDocSnap.data().availableTokens) - 1,
+  });
+
+  // create custom id for itinerary
+  const newItineraryId = String(new Date().getTime())
+
+  // add itinerary to firestore
+  await setDoc(doc(db, "itineraries", newItineraryId), {
+    apiOutput: response.data.response,
+    info: finalContent,
+    title: `${userInput} - ${selectedMonth}`,
+    userId: `${user.sub}-${user.email}`,
+    created: new Date().toISOString(),
+    _id: newItineraryId
+  });
+
+      if (newItineraryId) {
+        router.push(`/${currentLanguage}/itinerary/${newItineraryId}`);
       }
     } catch (e) {
+      console.log(e)
       setIsGenerating(false);
     }
   };

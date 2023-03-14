@@ -6,15 +6,14 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBbWuYU_TmV0eqbzzbpGdxmlLVeFQCQxBQ",
-  authDomain: "freeplantour.firebaseapp.com",
-  projectId: "freeplantour",
-  storageBucket: "freeplantour.appspot.com",
-  messagingSenderId: "303816064772",
-  appId: "1:303816064772:web:4db000ef7dddbd13989a51",
-  measurementId: "G-Z2NYDY6Z6V"
+  apiKey: "AIzaSyClHr8tSkk1GkKPwr8TJofQy6Cn-nFkOPc",
+  authDomain: "freeplantour-17c73.firebaseapp.com",
+  projectId: "freeplantour-17c73",
+  storageBucket: "freeplantour-17c73.appspot.com",
+  messagingSenderId: "87935379683",
+  appId: "1:87935379683:web:210e743a7475b02f477dd6"
 };
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app)
